@@ -1,7 +1,7 @@
 {
   "name": "blue-lock-discord-bot",
   "version": "1.0.0",
-  "description": "Blue Lock Discord bot foundation for Mode 1 player characters and Mode 2 collection systems",
+  "description": "Blue Lock Discord bot foundation with Mode 1 personal character ownership and Mode 2 collection support.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -16,8 +16,10 @@
   "author": "Copilot",
   "license": "MIT",
   "dependencies": {
+    "@discordjs/rest": "^2.4.0",
     "better-sqlite3": "^11.7.2",
     "discord.js": "^14.16.3",
+    "discord-api-types": "^0.37.110",
     "dotenv": "^16.4.2"
   }
 }

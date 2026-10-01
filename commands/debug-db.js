@@ -1,51 +1,50 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getPlayerProfileByDiscordId } = require('../database/repositories/profileRepository');
-const { getCharacterById } = require('../systems/characterSystem');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const db = require('../database/connection');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('profile')
-    .setDescription('عرض الملف الشخصي للاعب')
-    .addUserOption(option =>
-      option.setName('member')
-        .setDescription('العضو الذي تريد عرض ملفه الشخصي')
+    .setName('debug-db')
+    .setDescription('إظهار معلومات قاعدة البيانات (مشرف فقط)')
+    .addBooleanOption(option =>
+      option.setName('verbose')
+        .setDescription('إظهار تفاصيل إضافية')
         .setRequired(false)
     ),
 
   async execute(interaction) {
-    const targetMember = interaction.options.getMember('member') || interaction.member;
-    const profile = getPlayerProfileByDiscordId(targetMember.id);
-
-    if (!profile) {
-      const embed = new EmbedBuilder()
-        .setColor(0xF59E0B)
-        .setTitle('لا يوجد ملف شخصي')
-        .setDescription(`لم يختَر ${targetMember.user.tag} شخصية بعد.`);
-
-      return interaction.reply({ embeds: [embed] });
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({ content: 'هذا الأمر للمديرين فقط.', ephemeral: true });
     }
 
-    const character = getCharacterById(profile.character_id);
-    const stats = profile.current_stats ? JSON.parse(profile.current_stats) : {};
-    const progression = profile.progression_data ? JSON.parse(profile.progression_data) : {};
+    const verbose = interaction.options.getBoolean('verbose') || false;
+    const counts = {
+      users: db.prepare('SELECT COUNT(*) as count FROM users').get().count,
+      character_ownership: db.prepare('SELECT COUNT(*) as count FROM character_ownership').get().count,
+      player_profiles: db.prepare('SELECT COUNT(*) as count FROM player_profiles').get().count,
+      character_collections: db.prepare('SELECT COUNT(*) as count FROM character_collections').get().count,
+      matches: db.prepare('SELECT COUNT(*) as count FROM matches').get().count,
+      challenges: db.prepare('SELECT COUNT(*) as count FROM challenges').get().count,
+      missions: db.prepare('SELECT COUNT(*) as count FROM missions').get().count,
+      achievements: db.prepare('SELECT COUNT(*) as count FROM achievements').get().count,
+      cooldowns: db.prepare('SELECT COUNT(*) as count FROM cooldowns').get().count
+    };
 
     const embed = new EmbedBuilder()
-      .setColor(0x8B5CF6)
-      .setTitle(`ملف ${targetMember.user.tag}`)
-      .setDescription(`الشخصية المختارة: ${profile.character_name}`)
+      .setColor(0x6366F1)
+      .setTitle('حالة قاعدة البيانات')
+      .setDescription('معلومات سريعة عن الجداول الأساسية.')
       .addFields(
-        { name: 'اسم الشخصية', value: profile.character_name || 'غير محدد', inline: true },
-        { name: 'المركز', value: profile.position || character?.position || 'غير محدد', inline: true },
-        { name: 'المستوى', value: String(profile.level || 1), inline: true },
-        { name: 'XP', value: String(profile.xp || 0), inline: true },
-        { name: 'Ego', value: String(profile.ego || 0), inline: true },
-        { name: 'Overall', value: String(profile.overall || character?.Overall || 0), inline: true },
-        { name: 'النقاط', value: JSON.stringify(stats).slice(0, 200) || 'لا توجد', inline: false },
-        { name: 'الطاقة', value: `${profile.energy_value || 100} / 100`, inline: true },
-        { name: 'الحالة', value: `${profile.condition_value || 100} / 100`, inline: true },
-        { name: 'القدرات', value: Array.isArray(profile.abilities) ? profile.abilities.join(', ') : (profile.abilities || 'لا توجد'), inline: false },
-        { name: 'التقدم', value: JSON.stringify(progression).slice(0, 200) || 'لا توجد بيانات', inline: false }
+        Object.entries(counts).map(([key, value]) => ({ name: key, value: String(value), inline: true }))
       );
+
+    if (verbose) {
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
+      embed.addFields({
+        name: 'Tables',
+        value: tables.map(row => row.name).join(', ') || 'No tables',
+        inline: false
+      });
+    }
 
     return interaction.reply({ embeds: [embed] });
   }

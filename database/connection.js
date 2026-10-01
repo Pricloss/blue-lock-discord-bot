@@ -1,20 +1,11 @@
-function getCurrentMissions() {
-  return [
-    {
-      id: 'mission_welcome',
-      title: 'مهمة ترحيب',
-      description: 'المهمة الأساسية الأولى: ابدأ بإنشاء ملفك الشخصي.',
-      reward: 'عملة افتراضية + نقطة تقدم'
-    },
-    {
-      id: 'mission_match_play',
-      title: 'مهمة مباراة',
-      description: 'العب مباراة ودعم نظام الطاقة والتقدم المستقبلي.',
-      reward: 'مكافأة افتراضية مستقبلية'
-    }
-  ];
-}
+const fs = require('fs');
+const path = require('path');
+const Database = require('better-sqlite3');
 
-module.exports = {
-  getCurrentMissions
-};
+const dataDirectory = path.join(__dirname, '..', 'data');
+fs.mkdirSync(dataDirectory, { recursive: true });
+
+const db = new Database(path.join(dataDirectory, 'blue_lock_bot.db'));
+db.pragma('journal_mode = WAL');
+
+module.exports = db;
