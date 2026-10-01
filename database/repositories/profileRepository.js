@@ -1,4 +1,4 @@
-const db = require('../database/connection');
+const db = require('../connection');
 
 function upsertPlayerProfile(profileData) {
   const existing = db.prepare('SELECT * FROM player_profiles WHERE discord_user_id = ?').get(String(profileData.discord_user_id));

@@ -1,4 +1,4 @@
-const db = require('../database/connection');
+const db = require('../connection');
 
 function getCollectionByUser(discordUserId) {
   return db.prepare('SELECT * FROM character_collections WHERE discord_user_id = ? ORDER BY character_name').all(String(discordUserId));

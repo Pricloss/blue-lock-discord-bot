@@ -9,6 +9,8 @@ const { CharacterNotFoundError, DuplicateCharacterClaimError } = require('../uti
 
 const CHARACTER_DATA_PATH = path.join(__dirname, '..', 'blue_lock_characters.json');
 
+let characterCache = null;
+
 function loadCharacterDatabase() {
   if (!fs.existsSync(CHARACTER_DATA_PATH)) {
     throw new Error('Missing character database file: blue_lock_characters.json');
@@ -27,6 +29,7 @@ function loadCharacterDatabase() {
   }
 
   validateCharacterDatabase(parsed);
+  characterCache = parsed;
   return parsed;
 }
 
@@ -35,12 +38,19 @@ function getCharacterById(characterId) {
     throw new CharacterNotFoundError('Invalid character ID.');
   }
 
-  const characters = loadCharacterDatabase();
-  return characters.find(character => String(character.id) === String(characterId)) || null;
+  if (!characterCache) {
+    characterCache = loadCharacterDatabase();
+  }
+
+  return characterCache.find(character => String(character.id) === String(characterId)) || null;
 }
 
 function getEligibleCharacters() {
-  return loadCharacterDatabase().filter(character => character.mode_1 === true);
+  if (!characterCache) {
+    characterCache = loadCharacterDatabase();
+  }
+
+  return characterCache.filter(character => character.mode_1 === true);
 }
 
 async function ensureCharacterRole(guild, character) {
@@ -48,11 +58,15 @@ async function ensureCharacterRole(guild, character) {
   let role = guild.roles.cache.find(existingRole => existingRole.name === roleName);
 
   if (!role) {
-    role = await guild.roles.create({
-      name: roleName,
-      mentionable: true,
-      reason: `Add role for ${roleName}`
-    });
+    try {
+      role = await guild.roles.create({
+        name: roleName,
+        mentionable: true,
+        reason: `Add role for ${roleName}`
+      });
+    } catch (error) {
+      throw new Error(`Failed to create Discord role: ${error.message}`);
+    }
   }
 
   return role;

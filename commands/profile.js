@@ -27,6 +27,11 @@ module.exports = {
     const character = getCharacterById(profile.character_id);
     const stats = profile.current_stats ? JSON.parse(profile.current_stats) : {};
     const progression = profile.progression_data ? JSON.parse(profile.progression_data) : {};
+    const abilities = profile.abilities ? JSON.parse(profile.abilities) : [];
+
+    const abilityText = Array.isArray(abilities)
+      ? abilities.map(a => a.name || String(a)).join(', ')
+      : 'لا توجد';
 
     const embed = new EmbedBuilder()
       .setColor(0x8B5CF6)
@@ -42,7 +47,7 @@ module.exports = {
         { name: 'إحصاءات حيوية', value: JSON.stringify(stats).slice(0, 200) || 'لا توجد', inline: false },
         { name: 'الطاقة', value: `${profile.energy_value || 100} / 100`, inline: true },
         { name: 'الحالة', value: `${profile.condition_value || 100} / 100`, inline: true },
-        { name: 'المهارات', value: Array.isArray(JSON.parse(profile.abilities || '[]')) ? JSON.parse(profile.abilities || '[]').map(a => a.name || a).join(', ') : (profile.abilities || 'لا توجد'), inline: false },
+        { name: 'المهارات', value: abilityText, inline: false },
         { name: 'التقدم', value: JSON.stringify(progression).slice(0, 200) || 'لا توجد بيانات', inline: false }
       );
 

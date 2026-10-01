@@ -1,4 +1,4 @@
-const db = require('../database/connection');
+const db = require('../connection');
 
 function claimOwnership({ discord_user_id, character_id, character_name }) {
   try {
