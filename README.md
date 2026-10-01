@@ -1,2 +1,18 @@
-# blue-lock-discord-bot
-Production-ready Discord bot for Blue Lock community/game server with character collection and competitive systems
+class CharacterNotFoundError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CharacterNotFoundError';
+  }
+}
+
+class DuplicateCharacterClaimError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'DuplicateCharacterClaimError';
+  }
+}
+
+module.exports = {
+  CharacterNotFoundError,
+  DuplicateCharacterClaimError
+};
